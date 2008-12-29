@@ -17,6 +17,7 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.
 
 Copyright (c) 2006 Zoltan Csizmadia <zoltan_csizmadia@yahoo.com>
+Copyright (c) 2008 Benedikt Heinz <Zn000h@googlemail.com>
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
