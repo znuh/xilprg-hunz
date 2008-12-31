@@ -1,5 +1,4 @@
 - Spartan3AN flash access
-- add other Spartan3A(N) IDs
 - external User1/2 support
 - Amontec & Znuhtag speedups (with queue & chunks)
 - testing
