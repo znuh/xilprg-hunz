@@ -49,7 +49,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define FAMILY_XC3S_ID			0x01400000	
 #define FAMILY_XC3SE_ID			0x01C00000
-#define FAMILY_XC3AN_ID			0x02600000
+#define FAMILY_XC3A_ID			0x02200000
+#define FAMILY_XC3AN_ID		0x02600000
 #define FAMILY_XC2VP_ID			0x01200000
 #define FAMILY_XC4VLX_ID		0x01600000
 #define FAMILY_XC4VSX_ID		0x02000000
@@ -393,6 +394,7 @@ int xc2v_program(chip* dev, cable* prg, program_file* file)
 
     spartan3 = ((dev->id & FAMILY_MASK) == FAMILY_XC3S_ID) ||
                ((dev->id & FAMILY_MASK) == FAMILY_XC3SE_ID) ||
+		((dev->id & FAMILY_MASK) == FAMILY_XC3A_ID) ||
                ((dev->id & FAMILY_MASK) == FAMILY_XC3AN_ID);
 
 	virtex2p = (dev->id & FAMILY_MASK) == FAMILY_XC2VP_ID;
