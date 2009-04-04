@@ -76,6 +76,13 @@ int chip::erase(cable* cbl)
     return (fn)(this, cbl);
 }
 
+int xc_user(chip *dev, cable *cbl, int user, uint8_t *in, uint8_t *out, int len);
+
+int chip::user(cable *cbl, int user, uint8_t *in, uint8_t *out, int len) {
+	
+	return xc_user(this,cbl,user,in,out,len);
+}
+
 int chip::program(cable* cbl, program_file* stream)
 {
 	string fn_name;

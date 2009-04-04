@@ -326,6 +326,59 @@ int cmd_idcode(int argc, const char** argv)
     return 0;
 }
 
+int cmd_user(int argc, const char **argv){
+	cable* cbl;
+    chip* dev;
+	int index, user;
+	uint8_t val;
+	const char* param;
+
+	// Position
+	param = cmdline_get_non_opt(argc, argv, 0);
+	if (param == NULL || str2num(param, &index) || index <= 0)
+	{
+        msgf(STR_INVALID_PARAMETERS);
+		return 0;
+    }
+
+	cbl = open_cable(1);
+    if (cbl == NULL)
+        return 0;
+
+    dev = select_device_in_chain(index - 1);
+    if (!dev)
+	goto cleanup;
+        //msgf(STR_DEVICE_IDCODE, index, dev->id);
+
+    // USER1..4
+    param = cmdline_get_non_opt(argc, argv, 1);
+    if(param == NULL) {
+	    msgf(STR_INVALID_PARAMETERS);
+	    goto cleanup;
+    }
+	if (param == NULL || str2num(param, &user) || (user <= 0) || (user > 4))
+	{
+        msgf(STR_INVALID_PARAMETERS);
+		return 0;
+    }
+    
+    // DR Value - 8 Bit only so far - TODO
+    param = cmdline_get_non_opt(argc, argv, 2);
+    if(param == NULL) {
+	    msgf(STR_INVALID_PARAMETERS);
+	    goto cleanup;
+    }
+    val=(strtoul(param,NULL,0))&0xff;
+    
+    if(!( dev->user(cbl, user,&val,&val,8)))
+	printf("USER%d: %x\n",1,val);
+    
+cleanup:    
+	close_cable(cbl);
+		
+   return 0;
+}
+
 int cmd_chips(int argc, const char** argv)
 {
     chip_database::iterator iter;
@@ -554,6 +607,7 @@ command_t commands[] =
     {STR_CMD_VERSION, cmd_version},
     {STR_CMD_EXIT, cmd_exit},
     {STR_CMD_HELP, cmd_help},
+    {STR_CMD_USER, cmd_user},
     {(unsigned int)-1, NULL}
 };
 

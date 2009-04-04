@@ -59,6 +59,7 @@ public:
     int erase(cable* cbl);
 	int program(cable* cbl, program_file* stream);
 	int readback(cable* cbl, u8** data);
+        int user(cable*, int user, uint8_t *in, uint8_t *out, int len);
 
 public:
 	string name;

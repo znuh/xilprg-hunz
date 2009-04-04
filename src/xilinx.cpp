@@ -77,6 +77,7 @@ static char strJPROGRAM[] = ".JPROGRAM";
 static char strJSTART[] = ".JSTART";
 static char strJSHUTDOWN[] = ".JSHUTDOWN";
 static char strCFG_IN[] = ".CFG_IN";
+static char strUSER[] = ".USER";
 
 int xcf_erase(chip* dev, cable* prg)
 {
@@ -129,6 +130,34 @@ cleanup:
 	prg->reset_tap_state();
 
 	return rc;
+}
+
+int xc_user(chip *dev, cable *cbl, int user, uint8_t *in, uint8_t *out, int len) {
+	u8 opUSER; //TODO: virtex: 16bit
+	char buf[16];
+	
+	sprintf(buf,"%s%d",strUSER,user);
+	
+	if(dev->family->vars.get(buf, &opUSER)) {
+		printf("USER%d unknown for this device\n",user);
+		return -1;
+	}
+	
+	cbl->reset_tap_state();
+	
+	// bypass
+	cbl->shift_ir(ALL_ONES, NULL);
+	
+	cbl->shift_ir(&opUSER);
+	
+	cbl->shift_dr(len,in,out);
+	
+	// bypass
+	cbl->shift_ir(ALL_ONES);
+
+	cbl->reset_tap_state();
+	
+	return 0;
 }
 
 int xcf_program(chip* dev, cable* prg, program_file* file)

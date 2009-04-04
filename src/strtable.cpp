@@ -176,8 +176,9 @@ const char* res_str_table[STR_MAX] =
     //STR_CMD_HELP
     "help\0" 
     "Shows help\0" 
-    "help [cmd]\0"
-    "Unable to open Amontec JTAG cable\0"
+    "help [cmd]\0",
+    "Unable to open Amontec JTAG cable\0",
+	"user\0" "user\0" "user\0"
 };
 
 const char* res_str(unsigned int res_id)
