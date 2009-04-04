@@ -371,7 +371,7 @@ int cmd_user(int argc, const char **argv){
     val=(strtoul(param,NULL,0))&0xff;
     
     if(!( dev->user(cbl, user,&val,&val,8)))
-	printf("USER%d: %x\n",1,val);
+	printf("USER%d: %x\n",user,val);
     
 cleanup:    
 	close_cable(cbl);
