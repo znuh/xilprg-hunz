@@ -316,7 +316,8 @@ void amontec::shift(int num_bits, void* ptdi, void* ptdo, int last) {
 			tdop[idx] >>= 1;
 			tdop[idx] |= (tdo&0x80);
 			//printf("tdo %x\n",tdo);
-			tdop[idx] >>= (8 - num_bits); // I have NO idea! TODO: check with loopback
+			if(num_bits<8)
+				tdop[idx] >>= (8 - num_bits); // I have NO idea! TODO: check with loopback
 		}
 	}
 	//if(ptdo)
