@@ -348,8 +348,7 @@ int cmd_user(int argc, const char **argv){
     dev = select_device_in_chain(index - 1);
     if (!dev)
 	goto cleanup;
-        //msgf(STR_DEVICE_IDCODE, index, dev->id);
-
+        
     // USER1..4
     param = cmdline_get_non_opt(argc, argv, 1);
     if(param == NULL) {
@@ -369,7 +368,7 @@ int cmd_user(int argc, const char **argv){
 	    goto cleanup;
     }
     val=(strtoul(param,NULL,0))&0xff;
-    
+
     if(!( dev->user(cbl, user,&val,&val,8)))
 	printf("USER%d: %x\n",user,val);
     
