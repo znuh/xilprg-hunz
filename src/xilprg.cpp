@@ -61,6 +61,7 @@ const char* strPROM = "PROM";
 const char* strIRLEN = "IRLEN";
 const char* strERASE = "ERASE";
 const char* strPROGRAM = "PROGRAM";
+const char* strFLASHPROG = "FLASHPROG";
 const char* strREADBACK = "READBACK";
 const char* strCABLE = "CABLE";
 

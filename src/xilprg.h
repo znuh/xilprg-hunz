@@ -78,6 +78,7 @@ extern const char* strPROM;
 extern const char* strIRLEN;
 extern const char* strERASE;
 extern const char* strPROGRAM;
+extern const char* strFLASHPROG;
 extern const char* strREADBACK;
 extern const char* strCABLE;
 

@@ -57,7 +57,7 @@ public:
 	chip(char* _name, u32 _id, u32 _mask, int _ir_length, chip_family* _family);
    
     int erase(cable* cbl);
-	int program(cable* cbl, program_file* stream);
+	int program(cable* cbl, program_file* stream, int flash);
 	int readback(cable* cbl, u8** data);
         int user(cable*, int user, uint8_t *in, uint8_t *out, int len);
 

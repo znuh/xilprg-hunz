@@ -83,12 +83,12 @@ int chip::user(cable *cbl, int user, uint8_t *in, uint8_t *out, int len) {
 	return xc_user(this,cbl,user,in,out,len);
 }
 
-int chip::program(cable* cbl, program_file* stream)
+int chip::program(cable* cbl, program_file* stream, int flash)
 {
 	string fn_name;
     chip_database::fn_program fn;
 
-    if (family->vars.get(strPROGRAM, fn_name))
+    if (family->vars.get(flash ? strFLASHPROG : strPROGRAM, fn_name))
     {
 		msgf(STR_OPERATION_NOT_SUPPORTED);
         return -1;

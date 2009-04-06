@@ -597,11 +597,14 @@ int xc_user(chip *dev, cable *cbl, int user, uint8_t *in, uint8_t *out, int len)
 
 int spi_xfer_user1(chip *dev, cable *cbl, uint8_t *in, uint8_t *out, int len, int oskip) {
 	uint8_t *ibuf=(uint8_t*)malloc(len+4+2+1);
-	uint8_t *obuf=(uint8_t*)malloc(len+4+2+1);
+	uint8_t *obuf=NULL;
 	int cnt,rc;
 	
 	assert(ibuf);
-	assert(obuf);
+	if(out) {
+		obuf=(uint8_t*)malloc(len+4+2+1);
+		assert(obuf);
+	}
 	
 	ibuf[0]=0x59;
 	ibuf[1]=0xa6;
@@ -619,12 +622,15 @@ int spi_xfer_user1(chip *dev, cable *cbl, uint8_t *in, uint8_t *out, int len, in
 	
 	rc=xc_user(dev,cbl,1,ibuf,obuf,(len+4+2+1)*8);
 	
-	for(cnt=0;cnt<len-oskip;cnt++) {
-		out[cnt]=reverse8(obuf[cnt+4+2+1+oskip]);
+	if(out) {
+		for(cnt=0;cnt<len-oskip;cnt++) {
+			out[cnt]=reverse8(obuf[cnt+4+2+1+oskip]);
+		}
 	}
 	
 	free(ibuf);
-	free(obuf);
+	if(obuf)
+		free(obuf);
 	
 	return rc;
 }
@@ -715,6 +721,67 @@ cleanup:
 	return rc;
 }
 
+int spi_program(chip* dev, cable* prg, program_file* file)
+{
+    int rc,i,len = file->get_bit_length()/8;
+    int pages, pgsize, page=0;
+    uint8_t *buf,*data=file->get_stream();
+    
+    if (len == 0)
+         return -1;
+
+    if(spi_flashinfo(dev,prg,&pgsize,&pages))
+	    return -1;
+	
+    // check of teh users sanity
+    if(len>(pgsize*pages)) {
+	    printf("dude, that file is larger than the flash!\n");
+	    return -1;
+    }
+    
+    buf=(uint8_t *)malloc(pgsize+8);
+    assert(buf);
+    
+    buf[0]=0x82; // page program with builtin erase
+    buf[3]=0;
+    
+    for(i = 0; i < len; i += pgsize)
+    {
+	uint16_t paddr = page<<1;
+	int res;
+	
+	if(!(page&0x0f)) {
+		printf("\rpage %d/%d",page,len/pgsize);
+		fflush(stdout);
+	}
+	
+	// see UG333 page 19
+	if(pgsize>512)
+		paddr<<=1;
+		
+	buf[1]=paddr>>8;
+	buf[2]=paddr&0xff;
+	
+	memcpy(buf+4,data+i,((len-i)>pgsize) ? pgsize : (len-i));
+	
+	res=spi_xfer_user1(dev,prg,buf,NULL,pgsize+4,0);
+	//TODO: check res
+	
+	usleep(6000); //t_p <= 6ms (UG333 page 44)	
+	page++;
+    } 
+
+	rc = 0;
+
+//cleanup:
+	
+     free(buf);
+
+    printf("\r");
+    
+    return rc;
+}
+
 ///////////////////////////////////////////////////////////
 
 int register_xilinx_functions()
@@ -727,6 +794,7 @@ int register_xilinx_functions()
 	g.chips.register_program_function("xcv_program", xcv_program);
     g.chips.register_program_function("xc2v_program", xc2v_program);
     g.chips.register_program_function("xc4v_program", xc4v_program);
+    g.chips.register_program_function("spi_program", spi_program);
     
     // Readback functions
     g.chips.register_readback_function("xcf_readback", xcf_readback);

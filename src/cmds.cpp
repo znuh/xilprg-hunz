@@ -128,7 +128,7 @@ cleanup:
 int cmd_program(int argc, const char** argv)
 {
 	cable* cbl = NULL;
-	int index;
+	int index, flash=0;
     program_file* f = NULL;
 	const char* param;
 	chip* dev;
@@ -175,9 +175,15 @@ int cmd_program(int argc, const char** argv)
 			goto cleanup;
 	}
     	
+	// flash write?
+	if (cmdline_has_opt(argc, argv, "flash"))
+	{
+		flash=1;
+	}
+	
     msgf(STR_PROGRAMMING, index, dev->name.c_str());
 	
-	if (dev->program(cbl, f) == 0)
+	if (dev->program(cbl, f,flash) == 0)
 		msgf(STR_SUCCESS_COMPLETED);
 	
 cleanup:
