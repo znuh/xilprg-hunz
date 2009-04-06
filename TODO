@@ -1,4 +1,5 @@
 - Spartan3AN flash access
+	- don't reverse bits when reading/writing a bitfile from/to flash?
 - external User1/2 support
 - Amontec & Znuhtag speedups (with queue & chunks)
 - testing
