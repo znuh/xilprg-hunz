@@ -675,8 +675,10 @@ int spi_readback(chip *dev, cable *prg, u8 **data) {
 	int pgsize,pages,page,rc=0;
 	
 	rc=spi_flashinfo(dev,prg,&pgsize,&pages);
-	if(rc)
-		goto cleanup;
+	if(rc) {
+		*data=NULL;
+		return -1;
+	}
 	
 	*data=(u8*)malloc(pgsize*pages);
 	
