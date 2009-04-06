@@ -133,68 +133,6 @@ cleanup:
 	return rc;
 }
 
-int xc_user(chip *dev, cable *cbl, int user, uint8_t *in, uint8_t *out, int len) {
-	u8 opUSER; //TODO: virtex: 16bit
-	char buf[16];
-	
-	sprintf(buf,"%s%d",strUSER,user);
-	
-	if(dev->family->vars.get(buf, &opUSER)) {
-		printf("USER%d unknown for this device\n",user);
-		return -1;
-	}
-	
-	cbl->reset_tap_state();
-	
-	// bypass
-	cbl->shift_ir(ALL_ONES, NULL);
-	
-	cbl->shift_ir(&opUSER);
-	
-	cbl->shift_dr(len,in,out);
-	
-	// bypass
-	cbl->shift_ir(ALL_ONES);
-
-	cbl->reset_tap_state();
-	
-	return 0;
-}
-
-int spi_xfer_user1(chip *dev, cable *cbl, uint8_t *in, uint8_t *out, int len, int oskip) {
-	uint8_t *ibuf=(uint8_t*)malloc(len+4+2+1);
-	uint8_t *obuf=(uint8_t*)malloc(len+4+2+1);
-	int cnt,rc;
-	
-	assert(ibuf);
-	assert(obuf);
-	
-	ibuf[0]=0x59;
-	ibuf[1]=0xa6;
-	ibuf[2]=0x59;
-	ibuf[3]=0xa6;
-	
-	ibuf[4]=(len*8)>>8;
-	ibuf[5]=(len*8)&0xff;
-	
-	for(cnt=0;cnt<6;cnt++)
-		ibuf[cnt]=reverse8(ibuf[cnt]);
-	
-	for(cnt=0;cnt<len;cnt++)
-		ibuf[cnt+4+2]=reverse8(in[cnt]);
-	
-	rc=xc_user(dev,cbl,1,ibuf,obuf,(len+4+2+1)*8);
-	
-	for(cnt=0;cnt<len-oskip;cnt++) {
-		out[cnt]=reverse8(obuf[cnt+4+2+1+oskip]);
-	}
-	
-	free(ibuf);
-	free(obuf);
-	
-	return rc;
-}
-
 int xcf_program(chip* dev, cable* prg, program_file* file)
 {
 	u16 d16;
@@ -269,92 +207,6 @@ cleanup:
 	prg->reset_tap_state();
 
     return rc;
-}
-
-int spi_cfg[] = {
-	// sreg[5..2], pagesize, pages
-	3, 264, 512, // XC3S50AN
-	7, 264, 2048, // XC3S200AN / XC3S400AN
-	9, 264, 4096, // XC3S700AN
-	11, 528, 4096, // XC3S1400AN
-	-1, 0, 0
-};
-
-int spi_flashinfo(chip *dev, cable *prg, int *size, int *pages) {
-	uint8_t buf[8];
-	int idx;
-	
-	buf[0]=0xd7;
-	spi_xfer_user1(dev,prg,buf,buf+4,2,1);
-	printf("status: %02x\n",buf[4]);
-	
-	for(idx=0;spi_cfg[idx] != -1;idx+=3) {
-		if(spi_cfg[idx] == ((buf[4]>>2)&0x0f))
-			break;
-	}
-	
-	if(spi_cfg[idx] == -1) {
-		printf("don't know that flash or status b0rken!\n");
-		return -1;
-	}
-	
-	printf("%d bytes/page, %d pages = %d bytes total \n",spi_cfg[idx+1],spi_cfg[idx+2],spi_cfg[idx+1]*spi_cfg[idx+2]);
-	
-	*size=spi_cfg[idx+1];
-	*pages=spi_cfg[idx+2];
-	
-	return 0;
-}
-
-int spi_readback(chip *dev, cable *prg, u8 **data) {
-	uint8_t *buf;
-	int pgsize,pages,page,rc=0;
-	
-	rc=spi_flashinfo(dev,prg,&pgsize,&pages);
-	if(rc)
-		goto cleanup;
-	
-	*data=(u8*)malloc(pgsize*pages);
-	
-	buf=(uint8_t*)malloc(pgsize+16);
-	buf[0]=0x03;
-	buf[3]=0;
-	
-	for(page=0;page<pages;page++) {
-		uint16_t paddr=page<<1;
-		int res;
-		
-		if(!(page&0x0f)) {
-			printf("\rpage %d",page);
-			fflush(stdout);
-		}
-		
-		// see UG333 page 19
-		if(pgsize>512)
-			paddr<<=1;
-		
-		buf[1]=paddr>>8;
-		buf[2]=paddr&0xff;
-		
-		res=spi_xfer_user1(dev,prg,buf,(*data)+(page*pgsize),pgsize+4,4);
-		//TODO: check res
-		
-		rc+=pgsize;
-	}
-	
-cleanup:
-	free(buf);
-
-	if (rc < 0)
-		if (*data)
-		{
-			free(*data);
-			*data = NULL;
-		}
-	
-	printf("\r");
-		
-	return rc;
 }
 
 int xcf_readback(chip* dev, cable* prg, u8** data)
@@ -713,6 +565,154 @@ cleanup:
 	prg->reset_tap_state();
 	
     return rc;
+}
+
+int xc_user(chip *dev, cable *cbl, int user, uint8_t *in, uint8_t *out, int len) {
+	u8 opUSER; //TODO: virtex: 16bit
+	char buf[16];
+	
+	sprintf(buf,"%s%d",strUSER,user);
+	
+	if(dev->family->vars.get(buf, &opUSER)) {
+		printf("USER%d unknown for this device\n",user);
+		return -1;
+	}
+	
+	cbl->reset_tap_state();
+	
+	// bypass
+	cbl->shift_ir(ALL_ONES, NULL);
+	
+	cbl->shift_ir(&opUSER);
+	
+	cbl->shift_dr(len,in,out);
+	
+	// bypass
+	cbl->shift_ir(ALL_ONES);
+
+	cbl->reset_tap_state();
+	
+	return 0;
+}
+
+int spi_xfer_user1(chip *dev, cable *cbl, uint8_t *in, uint8_t *out, int len, int oskip) {
+	uint8_t *ibuf=(uint8_t*)malloc(len+4+2+1);
+	uint8_t *obuf=(uint8_t*)malloc(len+4+2+1);
+	int cnt,rc;
+	
+	assert(ibuf);
+	assert(obuf);
+	
+	ibuf[0]=0x59;
+	ibuf[1]=0xa6;
+	ibuf[2]=0x59;
+	ibuf[3]=0xa6;
+	
+	ibuf[4]=(len*8)>>8;
+	ibuf[5]=(len*8)&0xff;
+	
+	for(cnt=0;cnt<6;cnt++)
+		ibuf[cnt]=reverse8(ibuf[cnt]);
+	
+	for(cnt=0;cnt<len;cnt++)
+		ibuf[cnt+4+2]=reverse8(in[cnt]);
+	
+	rc=xc_user(dev,cbl,1,ibuf,obuf,(len+4+2+1)*8);
+	
+	for(cnt=0;cnt<len-oskip;cnt++) {
+		out[cnt]=reverse8(obuf[cnt+4+2+1+oskip]);
+	}
+	
+	free(ibuf);
+	free(obuf);
+	
+	return rc;
+}
+
+int spi_cfg[] = {
+	// sreg[5..2], pagesize, pages
+	3, 264, 512, // XC3S50AN
+	7, 264, 2048, // XC3S200AN / XC3S400AN
+	9, 264, 4096, // XC3S700AN
+	11, 528, 4096, // XC3S1400AN
+	-1, 0, 0
+};
+
+int spi_flashinfo(chip *dev, cable *prg, int *size, int *pages) {
+	uint8_t buf[8];
+	int idx;
+	
+	buf[0]=0xd7;
+	spi_xfer_user1(dev,prg,buf,buf+4,2,1);
+	printf("status: %02x\n",buf[4]);
+	
+	for(idx=0;spi_cfg[idx] != -1;idx+=3) {
+		if(spi_cfg[idx] == ((buf[4]>>2)&0x0f))
+			break;
+	}
+	
+	if(spi_cfg[idx] == -1) {
+		printf("don't know that flash or status b0rken!\n");
+		return -1;
+	}
+	
+	printf("%d bytes/page, %d pages = %d bytes total \n",spi_cfg[idx+1],spi_cfg[idx+2],spi_cfg[idx+1]*spi_cfg[idx+2]);
+	
+	*size=spi_cfg[idx+1];
+	*pages=spi_cfg[idx+2];
+	
+	return 0;
+}
+
+int spi_readback(chip *dev, cable *prg, u8 **data) {
+	uint8_t *buf;
+	int pgsize,pages,page,rc=0;
+	
+	rc=spi_flashinfo(dev,prg,&pgsize,&pages);
+	if(rc)
+		goto cleanup;
+	
+	*data=(u8*)malloc(pgsize*pages);
+	
+	buf=(uint8_t*)malloc(pgsize+16);
+	buf[0]=0x03;
+	buf[3]=0;
+	
+	for(page=0;page<pages;page++) {
+		uint16_t paddr=page<<1;
+		int res;
+		
+		if(!(page&0x0f)) {
+			printf("\rpage %d",page);
+			fflush(stdout);
+		}
+		
+		// see UG333 page 19
+		if(pgsize>512)
+			paddr<<=1;
+		
+		buf[1]=paddr>>8;
+		buf[2]=paddr&0xff;
+		
+		res=spi_xfer_user1(dev,prg,buf,(*data)+(page*pgsize),pgsize+4,4);
+		//TODO: check res
+		
+		rc+=pgsize;
+	}
+	
+cleanup:
+	free(buf);
+
+	if (rc < 0)
+		if (*data)
+		{
+			free(*data);
+			*data = NULL;
+		}
+	
+	printf("\r");
+		
+	return rc;
 }
 
 ///////////////////////////////////////////////////////////
