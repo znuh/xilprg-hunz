@@ -648,6 +648,10 @@ int spi_flashinfo(chip *dev, cable *prg, int *size, int *pages) {
 	uint8_t buf[8];
 	int idx;
 	
+	buf[0]=0x9f;
+	spi_xfer_user1(dev,prg,buf,buf+4,3,1);
+	printf("JEDEC: %02x %02x\n",buf[4],buf[5]);
+	
 	buf[0]=0xd7;
 	spi_xfer_user1(dev,prg,buf,buf+4,2,1);
 	printf("status: %02x\n",buf[4]);
