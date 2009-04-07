@@ -1,3 +1,4 @@
+- fix TDO/MISO off-by-one bug
 - external User1/2 support
 - Amontec & Znuhtag speedups (with queue & chunks)
 - testing
