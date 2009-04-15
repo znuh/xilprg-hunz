@@ -336,7 +336,7 @@ int cmd_user(int argc, const char **argv){
 	cable* cbl;
     chip* dev;
 	int index, user;
-	uint8_t val;
+	uint8_t ival,oval[4];
 	const char* param;
 
 	// Position
@@ -373,10 +373,10 @@ int cmd_user(int argc, const char **argv){
 	    msgf(STR_INVALID_PARAMETERS);
 	    goto cleanup;
     }
-    val=(strtoul(param,NULL,0))&0xff;
+    ival=(strtoul(param,NULL,0))&0xff;
 
-    if(!( dev->user(cbl, user,&val,&val,8)))
-	printf("USER%d: %x\n",user,val);
+    if(!( dev->user(cbl, user,&ival,oval,8*2)))
+	printf("USER%d: %x %x\n",user,oval[0],oval[1]);
     
 cleanup:    
 	close_cable(cbl);
