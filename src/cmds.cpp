@@ -71,7 +71,7 @@ int cmd_read(int argc, const char** argv)
 	cable* cbl;
 	const char* param;
 	chip* dev;
-	int index, length;
+	int index, length, spi=0;
 	program_file* f = NULL;
 
 	// Position
@@ -98,8 +98,12 @@ int cmd_read(int argc, const char** argv)
     if (dev == NULL)
         goto cleanup;
 
+	// spi flash read?
+     if (cmdline_has_opt(argc, argv, "spi"))
+	 spi=1;    
+    
     msgf(STR_READING, index, dev->name.c_str());
-	length = dev->readback(cbl, &data);
+	length = dev->readback(cbl, &data, spi);
 	if (length <= 0 || data == NULL)
 		goto cleanup;
 
@@ -128,7 +132,7 @@ cleanup:
 int cmd_program(int argc, const char** argv)
 {
 	cable* cbl = NULL;
-	int index, flash=0;
+	int index, spi=0;
     program_file* f = NULL;
 	const char* param;
 	chip* dev;
@@ -175,15 +179,13 @@ int cmd_program(int argc, const char** argv)
 			goto cleanup;
 	}
     	
-	// flash write?
-	if (cmdline_has_opt(argc, argv, "flash"))
-	{
-		flash=1;
-	}
+	// spi flash write?
+	if (cmdline_has_opt(argc, argv, "spi"))
+		spi=1;
 	
     msgf(STR_PROGRAMMING, index, dev->name.c_str());
 	
-	if (dev->program(cbl, f,flash) == 0)
+	if (dev->program(cbl, f,spi) == 0)
 		msgf(STR_SUCCESS_COMPLETED);
 	
 cleanup:
@@ -239,7 +241,7 @@ int cmd_verify(int argc, const char** argv)
     program_file* f = NULL;
 	const char* param;
 	chip* dev;
-	int length;
+	int length, spi=0;
 	u8* data = NULL;
 
 	// Position
@@ -267,7 +269,7 @@ int cmd_verify(int argc, const char** argv)
 	dev = select_device_in_chain(index - 1);
     if (dev == NULL)
         goto cleanup;
-	
+	    
 	f = create_program_file(dev, argc, argv);
 	if (f == NULL)
 		goto cleanup;
@@ -276,8 +278,12 @@ int cmd_verify(int argc, const char** argv)
 	if (f->load(param))
 		goto cleanup;
 
+	// spi flash?
+	if (cmdline_has_opt(argc, argv, "spi"))
+		spi=1;	
+	
 	msgf(STR_VERIFYING, index, dev->name.c_str());
-	length = dev->readback(cbl, &data);
+	length = dev->readback(cbl, &data, spi);
 	if (length <= 0 || data == NULL)
 		goto cleanup;
 

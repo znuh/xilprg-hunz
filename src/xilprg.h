@@ -69,6 +69,9 @@ cable* open_cable(int detect);
 int close_cable(cable*);
 chip* select_device_in_chain(int index);
 
+int spi_readback(chip *dev, cable *prg, u8 **data);
+int spi_program(chip* dev, cable* prg, program_file* file);
+
 extern const char* strNAME;
 extern const char* strDESC;
 extern const char* strTYPE;
@@ -78,7 +81,6 @@ extern const char* strPROM;
 extern const char* strIRLEN;
 extern const char* strERASE;
 extern const char* strPROGRAM;
-extern const char* strFLASHPROG;
 extern const char* strREADBACK;
 extern const char* strCABLE;
 

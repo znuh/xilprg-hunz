@@ -840,11 +840,9 @@ int register_xilinx_functions()
 	g.chips.register_program_function("xcv_program", xcv_program);
     g.chips.register_program_function("xc2v_program", xc2v_program);
     g.chips.register_program_function("xc4v_program", xc4v_program);
-    g.chips.register_program_function("spi_program", spi_program);
     
     // Readback functions
     g.chips.register_readback_function("xcf_readback", xcf_readback);
-    g.chips.register_readback_function("spi_readback", spi_readback);
 
     return 0;
 }
