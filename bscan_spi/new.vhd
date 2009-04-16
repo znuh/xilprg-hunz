@@ -153,13 +153,13 @@ begin
 				
 				-- got magic + len
 				if header(46 downto 15) = x"59a659a6" then
-					len <= "0" & header(14 downto 0);
+					len <= header(14 downto 0) & "0";
 					have_header <= '1';
 					
 					--RAM_WE <= '1';
 					
 					-- enable CSB on rising edge (if len > 0?)
-					if "0" & header(14 downto 0) /= x"0000" then
+					if (header(14 downto 0) & "0") /= x"0000" then
 						CS_GO_PREP <= '1';
 					end if;
 					
