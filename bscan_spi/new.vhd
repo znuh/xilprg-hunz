@@ -40,7 +40,6 @@ architecture Behavioral of top is
 	signal RAM_WE: std_logic := '0';
 begin
 
-	--DBG <= CSB & TDI & TDO1 & DRCK1; -- TDO1/MISO
 	--JA(0) <= CAPTURE;
 	--JA(1) <= DRCK1;
 	--JA(2) <= MOSI;
@@ -55,11 +54,6 @@ begin
 	DRCK1_INV <= not DRCK1;
 
    RAMB16_S1_S1_inst : RAMB16_S1_S1
-   --generic map (
-      --INIT => X"0", --  Value of output RAM registers at startup
-      --SRVAL => X"0", --  Ouput value upon SSR assertion
-      --WRITE_MODE => "NO_CHANGE" --"WRITE_FIRST" --  WRITE_FIRST, READ_FIRST or NO_CHANGE
-   --)
    port map (
 	   DOA => RAM_DO,      -- Port A 1-bit Data Output
       DOB => open,      -- Port B 1-bit Data Output
@@ -75,13 +69,6 @@ begin
       SSRB => '0',    -- Port B Synchronous Set/Reset Input
       WEA => '0',      -- Port A Write Enable Input
       WEB => RAM_WE       -- Port B Write Enable Input
---      DOA => RAM_DO,
---      ADDR => RAM_ADDR,  -- 14-bit Address Input
---      CLK => DRCK1,
---      DI => RAM_DI,
---      EN => '1',      -- RAM Enable Input
---      SSR => '0',    -- Synchronous Set/Reset Input
---      WE => RAM_WE       -- Write Enable Input
    );
 
    BSCAN_SPARTAN3A_inst : BSCAN_SPARTAN3A
