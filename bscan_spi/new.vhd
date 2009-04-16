@@ -90,7 +90,7 @@ begin
 
 	SPI_ACCESS_inst : SPI_ACCESS
    generic map (
-      SIM_DEVICE => "3S700AN" -- "3S50AN", "3S200AN", "3S400AN", "3S700AN", "3S1400AN" 
+      SIM_DEVICE => "UNSPECIFIED" --"3S50AN", "3S200AN", "3S400AN", "3S700AN", "3S1400AN" 
 	)
    port map (
       MISO => MISO, --TDO1,  -- Serial output data from SPI PROM
