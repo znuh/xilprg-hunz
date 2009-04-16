@@ -4,6 +4,7 @@
     FPGA: is 1st bit of ram ok?
     host: speedup read / write (ir/dr, read 2048-n)
     host: JEDEC list!
+    docs: programming external SPI Flash
 
 - external User1/2 support
 - Amontec & Znuhtag speedups (with queue & chunks)
