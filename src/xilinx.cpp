@@ -595,43 +595,69 @@ int xc_user(chip *dev, cable *cbl, int user, uint8_t *in, uint8_t *out, int len)
 	return 0;
 }
 
-int spi_xfer_user1(chip *dev, cable *cbl, uint8_t *in, uint8_t *out, int len, int oskip) {
-	uint8_t *ibuf=(uint8_t*)malloc(len+4+2+1);
-	uint8_t *obuf=NULL;
-	int cnt,rc;
+void hexdump(uint8_t *d, int len) {
+	while(len--) {
+		printf("%02x ",*d);
+		d++;
+	}
+	printf("\n");
+}
+
+int spi_xfer_user1(chip *dev, cable *cbl, uint8_t *last_miso, int miso_len, int miso_skip, uint8_t *mosi, int mosi_len) {
+	uint8_t *mosi_buf=NULL;
+	uint8_t *miso_buf=NULL;
+	int cnt, rc, maxlen = miso_len+miso_skip;
 	
-	assert(ibuf);
-	if(out) {
-		obuf=(uint8_t*)malloc(len+4+2+1);
-		assert(obuf);
+	//TODO: assert maxlens
+	
+	if((mosi_len) && (mosi_len + 4 + 2 > maxlen))
+		maxlen = mosi_len + 4 + 2;
+		
+	if(last_miso) {
+		miso_buf=(uint8_t*)malloc(maxlen);
+		assert(miso_buf);
+	}
+
+	if(mosi) {
+		mosi_buf=(uint8_t*)malloc(maxlen);
+		assert(mosi_buf);
+	
+		// SPI magic
+		mosi_buf[0]=0x59;
+		mosi_buf[1]=0xa6;
+		mosi_buf[2]=0x59;
+		mosi_buf[3]=0xa6;
+	
+		// SPI len (bits)
+		mosi_buf[4]=(mosi_len*8)>>8;
+		mosi_buf[5]=(mosi_len*8)&0xff;
+	
+		// bit-reverse header
+		for(cnt=0;cnt<6;cnt++)
+			mosi_buf[cnt]=reverse8(mosi_buf[cnt]);
+	
+		// bit-reverse payload
+		for(cnt=0;cnt<mosi_len;cnt++)
+			mosi_buf[cnt+4+2]=reverse8(mosi[cnt]);
 	}
 	
-	ibuf[0]=0x59;
-	ibuf[1]=0xa6;
-	ibuf[2]=0x59;
-	ibuf[3]=0xa6;
 	
-	ibuf[4]=(len*8)>>8;
-	ibuf[5]=(len*8)&0xff;
+	rc=xc_user(dev,cbl,1,mosi_buf,miso_buf,maxlen*8);
 	
-	for(cnt=0;cnt<6;cnt++)
-		ibuf[cnt]=reverse8(ibuf[cnt]);
-	
-	for(cnt=0;cnt<len;cnt++)
-		ibuf[cnt+4+2]=reverse8(in[cnt]);
-	
-	rc=xc_user(dev,cbl,1,ibuf,obuf,(len+4+2+1)*8);
-	
-	if(out) {
-		for(cnt=0;cnt<len-oskip;cnt++) {
-			out[cnt]=reverse8(obuf[cnt+4+2+1+oskip]);
-		}
+	if(miso_buf) {
+		//printf("miso "); hexdump(miso_buf,maxlen);	
+		
+		for(cnt=miso_skip; cnt<miso_len+miso_skip; cnt++)
+			last_miso[cnt-miso_skip]=reverse8(miso_buf[cnt]);
+		
+		free(miso_buf);
 	}
 	
-	free(ibuf);
-	if(obuf)
-		free(obuf);
-	
+	if(mosi_buf) {
+		//printf("mosi "); hexdump(mosi_buf,maxlen);
+		free(mosi_buf);
+	}
+	//printf("-\n");
 	return rc;
 }
 
@@ -648,16 +674,22 @@ int spi_flashinfo(chip *dev, cable *prg, int *size, int *pages) {
 	uint8_t buf[8];
 	int idx;
 	
+	// send JEDEC info
 	buf[0]=0x9f;
-	spi_xfer_user1(dev,prg,buf,buf+4,3,1);
-	printf("JEDEC: %02x %02x\n",buf[4],buf[5]);
+	spi_xfer_user1(dev,prg,NULL,0,0,buf,3);
 	
-	buf[0]=0xd7;
-	spi_xfer_user1(dev,prg,buf,buf+4,2,1);
-	printf("status: %02x\n",buf[4]);
+	// get JEDEC, send status
+	buf[4]=0xd7;
+	spi_xfer_user1(dev,prg,buf,2,1,buf+4,2);
+	
+	printf("JEDEC: %02x %02x\n",buf[0],buf[1]);
+	
+	// get status
+	spi_xfer_user1(dev, prg, buf,1,1, NULL, 0);
+	printf("status: %02x\n",buf[0]);
 	
 	for(idx=0;spi_cfg[idx] != -1;idx+=3) {
-		if(spi_cfg[idx] == ((buf[4]>>2)&0x0f))
+		if(spi_cfg[idx] == ((buf[0]>>2)&0x0f))
 			break;
 	}
 	
@@ -676,10 +708,10 @@ int spi_flashinfo(chip *dev, cable *prg, int *size, int *pages) {
 
 int spi_readback(chip *dev, cable *prg, u8 **data) {
 	uint8_t *buf;
-	int pgsize,pages,page,rc=0;
+	int pgsize,pages,page,res,rc=0;
 	
-	rc=spi_flashinfo(dev,prg,&pgsize,&pages);
-	if(rc) {
+	res=spi_flashinfo(dev,prg,&pgsize,&pages);
+	if(res) {
 		*data=NULL;
 		return -1;
 	}
@@ -688,9 +720,13 @@ int spi_readback(chip *dev, cable *prg, u8 **data) {
 	
 	buf=(uint8_t*)malloc(pgsize+16);
 	buf[0]=0x03;
-	buf[3]=0;
+	buf[3]=buf[2]=buf[1]=0;
 	
-	for(page=0;page<pages;page++) {
+	// send: read 1st page
+	res=spi_xfer_user1(dev,prg,NULL,0,0,buf,pgsize+4);
+	//TODO: check res
+	
+	for(page=1;page<pages;page++) {
 		uint16_t paddr=page<<1;
 		int res;
 		
@@ -706,13 +742,17 @@ int spi_readback(chip *dev, cable *prg, u8 **data) {
 		buf[1]=paddr>>8;
 		buf[2]=paddr&0xff;
 		
-		res=spi_xfer_user1(dev,prg,buf,(*data)+(page*pgsize),pgsize+4,4);
+		// get: page n-1, send: read page n		
+		res=spi_xfer_user1(dev,prg,(*data)+((page-1)*pgsize),pgsize,4,buf,pgsize+4);
 		//TODO: check res
 		
 		rc+=pgsize;
 	}
 	
-cleanup:
+	// get last page
+	res=spi_xfer_user1(dev,prg,(*data)+((page-1)*pgsize),pgsize,4,NULL,0);
+	
+//cleanup:
 	free(buf);
 
 	if (rc < 0)
@@ -770,14 +810,14 @@ int spi_program(chip* dev, cable* prg, program_file* file)
 	
 	memcpy(buf+4,data+i,((len-i)>pgsize) ? pgsize : (len-i));
 	
-	res=spi_xfer_user1(dev,prg,buf,NULL,pgsize+4,0);
+	res=spi_xfer_user1(dev,prg,NULL,0,0,buf,pgsize+4);
 	//TODO: check res
 	
 	usleep(6000); //t_p <= 6ms (UG333 page 44)	
 	page++;
     } 
 
-	rc = 0;
+     rc = 0;
 
 //cleanup:
 	

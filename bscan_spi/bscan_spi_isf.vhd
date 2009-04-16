@@ -7,10 +7,6 @@ library UNISIM;
 use UNISIM.VComponents.all;
 
 entity top is
-	--Port (
-		--JA: out std_logic_vector(3 downto 0);
-		--JB: out std_logic_vector(3 downto 0)
-	--);
 end top;
 
 architecture Behavioral of top is
@@ -39,17 +35,6 @@ architecture Behavioral of top is
 	signal RAM_DI: std_logic_vector(0 downto 0);
 	signal RAM_WE: std_logic := '0';
 begin
-
-	--JA(0) <= CAPTURE;
-	--JA(1) <= DRCK1;
-	--JA(2) <= MOSI;
-	--JA(3) <= SEL1;
-	--JA <= "0000";
-	--JB <= "0000";
-	--JB(0) <= TDO1;
-	--JB(1) <= TDI;
-	--JB(2) <= MISO;
-	--JB(3) <= CSB;
 
 	DRCK1_INV <= not DRCK1;
 
@@ -98,16 +83,6 @@ begin
       CSB => CSB,    -- SPI PROM enable input
       MOSI => MOSI   -- Serial input data to SPI PROM
    );
-
-	-- TODO:
-		-- host: fix flash read / write code
-		-- host: speedup read / write (ir/dr, read 2048-n)
-		-- host: test write / read
-		-- host: program / read -spi instead of -flash
-		-- host: JEDEC list!
-		-- FPGA: verify timings! RAM clock + output! CSB! (logic analyzer)
-		-- FPGA: is 1st bit of ram ok?
-		-- FPGA: len -> *8 instead of *16
 
 	-- TODO: add register?
 	MOSI <= TDI; -- when DRCK1='0' else MOSI;
