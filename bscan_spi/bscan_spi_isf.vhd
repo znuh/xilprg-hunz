@@ -84,16 +84,13 @@ begin
       MOSI => MOSI   -- Serial input data to SPI PROM
    );
 
-	-- TODO: add register?
-	MOSI <= TDI; -- when DRCK1='0' else MOSI;
+	MOSI <= TDI;
 	
 	CSB <= '0' when CS_GO = '1' and CS_STOP = '0' else '1';
 
 	RAM_DI <= MISO & "";
 
 	TDO1 <= RAM_DO(0);
-
-	--RAM_WE <= not CSB; --have_header;
 
 	-- falling edges
 	process(DRCK1, CAPTURE, RESET, UPDATE, SEL1)
@@ -106,20 +103,9 @@ begin
 			-- disable CSB
 			CS_GO_PREP <= '0';
 			CS_STOP <= '0';
-			
-			--RAM_WE <= '0';
-			--RAM_RADDR <= (others => '0');
-			
-			-- setup 1st TDO - TODO: UNSURE!
-			--TDO1 <= RAM_DO(0);
-						
+									
 		elsif falling_edge(DRCK1) then
-		
-			-- setup TDO
-			--TDO1 <= RAM_DO(0);
-			
-			--RAM_RADDR <= RAM_RADDR + 1;
-			
+					
 			-- disable CSB?
 			CS_STOP <= CS_STOP_PREP;
 			
@@ -130,9 +116,7 @@ begin
 				if header(46 downto 15) = x"59a659a6" then
 					len <= header(14 downto 0) & "0";
 					have_header <= '1';
-					
-					--RAM_WE <= '1';
-					
+										
 					-- enable CSB on rising edge (if len > 0?)
 					if (header(14 downto 0) & "0") /= x"0000" then
 						CS_GO_PREP <= '1';
@@ -140,7 +124,6 @@ begin
 					
 				end if;
 
-			-- TODO: 0001 or so?
 			elsif len /= x"0000" then
 				len <= len - 1;
 			
@@ -165,13 +148,10 @@ begin
 			RAM_WE <= '0';
 				
 		elsif rising_edge(DRCK1) then
-		
-			-- sample MISO & TDI
-			--RAM_DI <= MISO & "";
-			
+					
 			RAM_RADDR <= RAM_RADDR + 1;
 			
-			RAM_WE <= not CSB; --have_header;
+			RAM_WE <= not CSB;
 			
 			if RAM_WE='1' then
 				RAM_WADDR <= RAM_WADDR + 1;

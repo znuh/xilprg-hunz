@@ -1,9 +1,5 @@
 
-- BSCAN_SPI:
-    FPGA: verify timings! RAM clock + output! CSB! (logic analyzer)
-    FPGA: is 1st bit of ram ok?
-    docs: programming external SPI Flash
-
+- docs: programming external SPI Flash
 - external User1/2 support
 - Amontec & Znuhtag speedups (with queue & chunks)
 - testing
