@@ -44,7 +44,8 @@ SRCS = \
 	$(SRC_DIR)/digilent.cpp \
 	$(SRC_DIR)/znuhtag.cpp \
 	$(SRC_DIR)/xilinx.cpp \
-	$(SRC_DIR)/amontec.cpp
+	$(SRC_DIR)/amontec.cpp \
+	$(SRC_DIR)/spi.cpp
 
 OBJS = $(addsuffix .o, \
 		$(addprefix $(OBJ_DIR)/, \

@@ -69,6 +69,8 @@ cable* open_cable(int detect);
 int close_cable(cable*);
 chip* select_device_in_chain(int index);
 
+int xc_user(chip *dev, cable *cbl, int user, uint8_t *in, uint8_t *out, int len);
+
 int spi_readback(chip *dev, cable *prg, u8 **data);
 int spi_program(chip* dev, cable* prg, program_file* file);
 
