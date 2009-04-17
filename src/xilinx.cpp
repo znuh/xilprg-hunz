@@ -46,7 +46,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "cable.h"
 #include "chip.h"
 #include "prgfile.h"
-#include <assert.h>
 
 #define FAMILY_XC3S_ID			0x01400000	
 #define FAMILY_XC3SE_ID			0x01C00000
