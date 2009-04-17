@@ -118,7 +118,7 @@ int spi_flashinfo(chip *dev, cable *prg, int *size, int *pages) {
 	*size=spi_cfg[idx+1];
 	*pages=spi_cfg[idx+2];
 	
-	return -1;
+	return 0;
 }
 
 int spi_readback(chip *dev, cable *prg, u8 **data) {
