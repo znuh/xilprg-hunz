@@ -177,8 +177,12 @@ const char* res_str_table[STR_MAX] =
     "help\0" 
     "Shows help\0" 
     "help [cmd]\0",
+    //STR_UNABLE_TO_OPEN_AMONTEC_USB
     "Unable to open Amontec JTAG cable\0",
-	"user\0" "user\0" "user\0"
+    //STR_CMD_USER
+	"user\0" "user\0" "user\0",
+    //STR_CMD_SERVER
+	"server\0" "server\0" "server\0",
 };
 
 const char* res_str(unsigned int res_id)

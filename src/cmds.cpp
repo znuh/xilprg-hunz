@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "prgfile.h"
 #include "utils.h"
 #include "chip.h"
+#include "server.h"
 
 const char* current_command_line;
 
@@ -338,6 +339,21 @@ int cmd_idcode(int argc, const char** argv)
     return 0;
 }
 
+int cmd_server(int argc, const char **argv) {
+	const char* param;
+	int index;
+
+	// Position
+	param = cmdline_get_non_opt(argc, argv, 0);
+	if (param == NULL || str2num(param, &index) || index <= 0)
+	{
+        msgf(STR_INVALID_PARAMETERS);
+		return 0;
+	}
+	
+	return start_server(index);
+}
+
 int cmd_user(int argc, const char **argv){
 	cable* cbl;
     chip* dev;
@@ -619,6 +635,7 @@ command_t commands[] =
     {STR_CMD_EXIT, cmd_exit},
     {STR_CMD_HELP, cmd_help},
     {STR_CMD_USER, cmd_user},
+    {STR_CMD_SERVER, cmd_server},
     {(unsigned int)-1, NULL}
 };
 
