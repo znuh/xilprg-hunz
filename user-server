@@ -11,6 +11,8 @@ reply:
 - len
 - payload
 
+- reply immer von letztem request
+
 - register user1+magic_len+magic, user2,... on connect
 - multiple clients with different user+magic allowed
 - only one client if no user+magic provided
