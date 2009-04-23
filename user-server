@@ -1,0 +1,25 @@
+user command struktur:
+- bitstream id
+- cmd: user1/2/...
+- reply len + skip
+- laenge payload
+- payload
+
+reply:
+- bitstream id?
+- result
+- len
+- payload
+
+- register user1+magic_len+magic, user2,... on connect
+- multiple clients with different user+magic allowed
+- only one client if no user+magic provided
+
+- cable open on server connect
+- cable close on server disconnect
+
+- andere xilprg-commands erst nachdem user cmd fertig ausgeführt ist
+- danach client über neue config informieren
+  - ser.nr. + ack?
+- user cmd erst nachdem xilprg fertig
+
