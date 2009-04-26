@@ -6,6 +6,10 @@
 #include <endian.h>
 #include <string.h>
 #include <stdio.h>
+#include "xilprg.h"
+#include "cable.h"
+#include "chip.h"
+#include "prgfile.h"
 #include <assert.h>
 
 #define SERV_PORT		18034
@@ -57,6 +61,8 @@ int start_server(int index) {
 		struct xilusr00_cmd_hdr xilusr00_cmd_hdr;
 		struct xilusr00_reply_hdr xilusr00_reply_hdr;
 		char version_string[8];
+		cable *cbl;
+		chip *dev;
 		
 		bzero(&xilusr00_cmd_hdr, sizeof(xilusr00_cmd_hdr));
 		bzero(&xilusr00_reply_hdr, sizeof(xilusr00_reply_hdr));
@@ -72,15 +78,21 @@ int start_server(int index) {
 		assert(read(remote_sock,version_string,8) == 8);
 		assert(!memcmp(version_string,"XILUSR00",8));
 		
-		// TODO: open cable
+		// open cable
+		cbl = open_cable(1);
+		assert(cbl);
+		
+		// select device
+		dev = select_device_in_chain(index - 1);
+		assert(dev);
 		
 		printf("cmd mode\n");
 		while(read(remote_sock,&xilusr00_cmd_hdr, sizeof(xilusr00_cmd_hdr)) == sizeof(xilusr00_cmd_hdr)) {
-			int user;
+			int res, user, len;
 			
-			// we use le for the transfers
+			// screw network order, we use le for the transfers
 			xilusr00_cmd_hdr.cmd = le32toh(xilusr00_cmd_hdr.cmd);
-			xilusr00_cmd_hdr.data_len = le32toh(xilusr00_cmd_hdr.data_len);
+			len = xilusr00_cmd_hdr.data_len = le32toh(xilusr00_cmd_hdr.data_len);
 			
 			// read command
 			assert(xilusr00_cmd_hdr.cmd & CMD_USER);
@@ -91,31 +103,37 @@ int start_server(int index) {
 			assert(user<=4);
 			
 			// check len
-			assert(xilusr00_cmd_hdr.data_len <= MAX_DATASIZE);
+			assert(len <= MAX_DATASIZE);
 			
 			// read data
-			if (read(remote_sock,ibuf,xilusr00_cmd_hdr.data_len) != (int)xilusr00_cmd_hdr.data_len)
+			if (read(remote_sock,ibuf,len) != len)
 				break;
 			
-			// TODO: invoke user
+			// invoke user
+			res = xc_user(dev, cbl, user, ibuf, obuf, len*8); //TODO: len in bits!?
 			
 			// prepare result
-			xilusr00_reply_hdr.result = htole32(xilusr00_cmd_hdr.cmd);
-			xilusr00_reply_hdr.reply_len = htole32(xilusr00_cmd_hdr.data_len);
+			xilusr00_reply_hdr.result = xilusr00_cmd_hdr.cmd;
+			if(res<0)
+				xilusr00_reply_hdr.result |= ERROR;
+			
+			// to le
+			xilusr00_reply_hdr.result = htole32(xilusr00_reply_hdr.result);
+			xilusr00_reply_hdr.reply_len = htole32(len);
 			
 			// send result
 			if(write(remote_sock,&xilusr00_reply_hdr,sizeof(xilusr00_reply_hdr)) != sizeof(xilusr00_reply_hdr))
 				break;
 			
 			// send data
-			if(write(remote_sock,obuf,xilusr00_cmd_hdr.data_len) != (int)xilusr00_cmd_hdr.data_len)
+			if(write(remote_sock,obuf,len) != len)
 				break;
 		}
 		
 		printf("close\n");
 		close(remote_sock);
 		
-		// TODO: close cable
+		close_cable(cbl);
 	}
 	
 	free(ibuf);
