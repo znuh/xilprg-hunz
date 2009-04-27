@@ -107,12 +107,14 @@ int amontec::open() {
 		
 	assert( (ftdic = ftdi_new()) != NULL );
 
-	ftdi_init(ftdic);
-    ftdi_set_interface(ftdic, INTERFACE_A);
-    rc = ftdi_usb_open(ftdic, USB_VENDOR_ID, USB_PRODUCT_ID);
+	assert(!(ftdi_init(ftdic)));
+	
+	rc = ftdi_usb_open(ftdic, USB_VENDOR_ID, USB_PRODUCT_ID);
 	if(rc)
 		goto cleanup;
-    
+	
+	assert(!(ftdi_set_interface(ftdic, INTERFACE_A)));
+	
 	rc = ftdi_set_bitmode(ftdic, 0x1b, BITMODE_MPSSE); //0B
 	if(rc)
 		goto cleanup;
@@ -154,8 +156,10 @@ int amontec::close() {
 		
 	if(ftdic) {
 	
-		ftdi_usb_close(ftdic);
-	    ftdi_free(ftdic);
+		if(ftdic->usb_dev)
+			ftdi_usb_close(ftdic);
+		
+		ftdi_free(ftdic);
 		
 		ftdic = NULL;
 	}
