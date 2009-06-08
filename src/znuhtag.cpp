@@ -61,34 +61,22 @@ znuhtag::~znuhtag()
 {
 }
 
-struct usb_device* znuhtag::find_znuhtag_device()
+struct usb_device* znuhtag::find_device()
 {
-	struct usb_bus* bus;
-	struct usb_device* dev;
-    int i;
+	struct usb_bus *bus;
+	struct usb_device *dev;
 
 	usb_find_busses();
 	usb_find_devices();
 
-    for (bus = usb_get_busses(); bus; bus = bus->next) 
-	{
-		if (bus->root_dev)
-		{
-			for (i = 0; i < bus->root_dev->num_children; i++)
-		        if (bus->root_dev->children[i]->descriptor.idVendor == USB_VENDOR_ID &&
-                    bus->root_dev->children[i]->descriptor.idProduct == USB_PRODUCT_ID)
-					// Found it
-					return bus->root_dev->children[i];
+	for (bus = usb_get_busses(); bus; bus = bus->next) {
+		for (dev = bus->devices; dev; dev = dev->next) {
+			if (dev->descriptor.idVendor == USB_VENDOR_ID &&
+			    dev->descriptor.idProduct == USB_PRODUCT_ID)
+				// Found it
+				return dev;
 		}
-		else
-		{
-			for (dev = bus->devices; dev; dev = dev->next)
-                if (dev->descriptor.idVendor == USB_VENDOR_ID &&
-                    dev->descriptor.idProduct == USB_PRODUCT_ID)
-					// Found it
-					return dev;
-		}
-    }
+	}
 
 	return NULL;
 }
@@ -109,7 +97,7 @@ int znuhtag::open()
 		// Already open
         return -1;
 
-	dev = find_znuhtag_device();
+	dev = find_device();
 	if (dev == NULL)
 		goto cleanup;
         
@@ -117,6 +105,8 @@ int znuhtag::open()
     if (handle == NULL)
         goto cleanup;
 
+    usb_detach_kernel_driver_np(handle, 0);
+    
     if (usb_set_configuration(handle, 1) < 0)
         goto cleanup;
 

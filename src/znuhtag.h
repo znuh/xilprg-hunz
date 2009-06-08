@@ -83,7 +83,7 @@ public:
 	virtual void tms_transition(u32 seq, int cnt);
 
 protected:
-	struct usb_device* find_znuhtag_device();
+	struct usb_device* find_device();
 
 	void bindump(unsigned char *d, int len);
 	void hexdump(unsigned char *d, int len);
