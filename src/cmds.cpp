@@ -357,8 +357,8 @@ int cmd_server(int argc, const char **argv) {
 int cmd_user(int argc, const char **argv){
 	cable* cbl;
     chip* dev;
-	int index, user;
-	uint8_t ival,oval[4];
+	int index, user,cnt,val;
+	uint8_t ival[32],oval[32];
 	const char* param;
 
 	// Position
@@ -395,10 +395,26 @@ int cmd_user(int argc, const char **argv){
 	    msgf(STR_INVALID_PARAMETERS);
 	    goto cleanup;
     }
-    ival=(strtoul(param,NULL,0))&0xff;
+    
+    printf("USER%d: ",user);
+    
+    cnt=0;
+    
+    while((param[0]) && (sscanf(param,"%02x",&val))) {
+	    param+=2;
+	    ival[cnt++]=val;
+	    printf("%02x",val);
+	}
+	printf(" -> ");
 
-    if(!( dev->user(cbl, user,&ival,oval,8*2)))
-	printf("USER%d: %x %x\n",user,oval[0],oval[1]);
+    //ival=(strtoul(param,NULL,0))&0xff;
+
+    if(!( dev->user(cbl, user,ival,oval,cnt*8))) {
+	for(val=0;val<cnt;val++)
+		 printf("%02x",oval[val]);
+    }
+    printf("\n");
+	//printf("USER%d: %x %x\n",user,oval[0],oval[1]);
     
 cleanup:    
 	close_cable(cbl);
