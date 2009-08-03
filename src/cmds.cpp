@@ -422,6 +422,102 @@ cleanup:
    return 0;
 }
 
+unsigned long getbytes(char *buf, int num) {
+    char bbuf[10];
+    int count;
+    
+    for(count=0;count<(num<<1);count++)
+	bbuf[count]=buf[count];
+    bbuf[count]=0;
+    
+    return strtoul(bbuf, NULL, 16);
+}
+
+int cmd_write(int argc, const char **argv){
+	cable* cbl;
+    chip* dev;
+	int index, user,cnt;
+	uint8_t ival[32],oval[32];
+	uint8_t len, type;
+	uint16_t addr, data;
+	const char* param;
+	char buf[128], *ptr;
+	FILE *fl;
+
+	// Position
+	param = cmdline_get_non_opt(argc, argv, 0);
+	if (param == NULL || str2num(param, &index) || index <= 0)
+	{
+        msgf(STR_INVALID_PARAMETERS);
+		return 0;
+    }
+
+	cbl = open_cable(1);
+    if (cbl == NULL)
+        return 0;
+
+    dev = select_device_in_chain(index - 1);
+    if (!dev)
+	goto cleanup;
+  
+    // open file
+    param = cmdline_get_non_opt(argc, argv, 1);
+    if(param == NULL) {
+	    msgf(STR_INVALID_PARAMETERS);
+	    goto cleanup;
+    }
+    
+    fl=fopen(param,"r");
+    if(fl == NULL) {
+	    msgf(STR_INVALID_PARAMETERS);
+	    goto cleanup;
+    }
+    
+    while(fgets(buf,128,fl)) {
+	    buf[127]=0;
+	    ptr=buf+1;
+
+	len=getbytes(ptr, 1);
+	ptr+=2;
+    
+	addr=getbytes(ptr, 2);
+	ptr+=4;
+    
+	type=getbytes(ptr, 1);
+	ptr+=2;
+	 
+	printf("#");
+	while(len--) {
+		data=getbytes(ptr,2);
+		ptr+=4;
+		
+		ival[0]=0x01;
+		ival[1]=(addr/2)>>8;
+		ival[2]=(addr/2)&0xff;
+		ival[3]=data>>8;
+		ival[4]=data&0xff;
+		
+		for(cnt=0;cnt<5;cnt++)
+			ival[cnt]=reverse8(ival[cnt]);
+		
+		dev->user(cbl, 1,ival,oval,5*8);
+		
+		for(cnt=0;cnt<5;cnt++)
+			printf("%02x ",reverse8(oval[cnt]));
+		printf("\n");
+		
+		addr+=2;
+	}
+
+    }
+    fclose(fl);
+    
+cleanup:    
+	close_cable(cbl);
+		
+   return 0;
+}
+
 int cmd_chips(int argc, const char** argv)
 {
     chip_database::iterator iter;
@@ -652,6 +748,7 @@ command_t commands[] =
     {STR_CMD_HELP, cmd_help},
     {STR_CMD_USER, cmd_user},
     {STR_CMD_SERVER, cmd_server},
+    {STR_CMD_WRITE, cmd_write},
     {(unsigned int)-1, NULL}
 };
 

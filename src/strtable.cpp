@@ -183,6 +183,9 @@ const char* res_str_table[STR_MAX] =
 	"user\0" "user\0" "user\0",
     //STR_CMD_SERVER
 	"server\0" "server\0" "server\0",
+    //STR_CMD_WRITE
+	"write\0" "write\0" "write\0",
+
 };
 
 const char* res_str(unsigned int res_id)
