@@ -402,7 +402,7 @@ int cmd_user(int argc, const char **argv){
     
     while((param[0]) && (sscanf(param,"%02x",&val))) {
 	    param+=2;
-	    ival[cnt++]=val;
+	    ival[cnt++]=reverse8(val);
 	    printf("%02x",val);
 	}
 	printf(" -> ");
@@ -411,7 +411,7 @@ int cmd_user(int argc, const char **argv){
 
     if(!( dev->user(cbl, user,ival,oval,cnt*8))) {
 	for(val=0;val<cnt;val++)
-		 printf("%02x",oval[val]);
+		 printf("%02x",reverse8(oval[val]));
     }
     printf("\n");
 	//printf("USER%d: %x %x\n",user,oval[0],oval[1]);
