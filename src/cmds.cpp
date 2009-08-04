@@ -486,7 +486,7 @@ int cmd_write(int argc, const char **argv){
 	type=getbytes(ptr, 1);
 	ptr+=2;
 	 
-	printf("#");
+	//printf("#");
 	while(len--) {
 		data=getbytes(ptr,2);
 		ptr+=4;
@@ -494,17 +494,17 @@ int cmd_write(int argc, const char **argv){
 		ival[0]=0x01;
 		ival[1]=(addr/2)>>8;
 		ival[2]=(addr/2)&0xff;
-		ival[3]=data>>8;
-		ival[4]=data&0xff;
+		ival[4]=data>>8;
+		ival[3]=data&0xff;
 		
 		for(cnt=0;cnt<5;cnt++)
 			ival[cnt]=reverse8(ival[cnt]);
 		
 		dev->user(cbl, 1,ival,oval,5*8);
 		
-		for(cnt=0;cnt<5;cnt++)
-			printf("%02x ",reverse8(oval[cnt]));
-		printf("\n");
+		//for(cnt=0;cnt<5;cnt++)
+		//	printf("%02x ",reverse8(oval[cnt]));
+		//printf("\n");
 		
 		addr+=2;
 	}
