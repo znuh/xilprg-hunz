@@ -439,7 +439,7 @@ int cmd_write(int argc, const char **argv){
 	int index, user,cnt;
 	uint8_t ival[32],oval[32];
 	uint8_t len, type;
-	uint16_t addr, data;
+	uint16_t addr, data, laddr=0;
 	const char* param;
 	char buf[128], *ptr;
 	FILE *fl;
@@ -477,17 +477,27 @@ int cmd_write(int argc, const char **argv){
 	    buf[127]=0;
 	    ptr=buf+1;
 
+	if(buf[0] != ':') {
+		printf("not a hex file?!? no '.' at pos 0\n");
+		goto cleanup;
+	}
+	
 	len=getbytes(ptr, 1);
 	ptr+=2;
     
 	addr=getbytes(ptr, 2);
 	ptr+=4;
-    
+	
 	type=getbytes(ptr, 1);
 	ptr+=2;
 	 
+	if(type)
+		continue;
+	
+	printf("addr %4x len %2d\n",addr,len);
+	
 	//printf("#");
-	while(len--) {
+	while(len) {
 		data=getbytes(ptr,2);
 		ptr+=4;
 		
@@ -505,12 +515,18 @@ int cmd_write(int argc, const char **argv){
 		//for(cnt=0;cnt<5;cnt++)
 		//	printf("%02x ",reverse8(oval[cnt]));
 		//printf("\n");
-		
+		laddr = addr;
+		//printf("laddr %x\n",laddr);
 		addr+=2;
+		len-=2;
 	}
 
     }
     fclose(fl);
+    
+    ival[0]=reverse8(0x02);
+    printf("last addr written - byte: 0x%x (%d) - word: 0x%x (%d)\n",laddr,laddr,laddr/2,laddr/2);
+    printf("reset: %d\n",dev->user(cbl, 1,ival,oval,5*8));
     
 cleanup:    
 	close_cable(cbl);
