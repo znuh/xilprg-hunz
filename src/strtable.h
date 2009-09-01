@@ -96,6 +96,7 @@ enum
 	STR_CMD_USER,
 	STR_CMD_SERVER,
 	STR_CMD_WRITE,
+	STR_CMD_LA,
 
     STR_MAX
 };

@@ -185,6 +185,8 @@ const char* res_str_table[STR_MAX] =
 	"server\0" "server\0" "server\0",
     //STR_CMD_WRITE
 	"write\0" "write\0" "write\0",
+    //STR_CMD_LA
+	"la\0" "la\0" "la\0",
 
 };
 

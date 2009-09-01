@@ -51,6 +51,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "chip.h"
 #include "server.h"
 
+#include <assert.h>
+
 const char* current_command_line;
 
 int cmd_detect(int, const char**)
@@ -354,6 +356,92 @@ int cmd_server(int argc, const char **argv) {
 	return start_server(index);
 }
 
+/* this will be gone again soon I hope! */
+int cmd_la(int argc, const char **argv) {
+	cable* cbl;
+	chip* dev;
+	int index, user,cnt,val;
+	uint8_t ival[32],oval[32];
+	const char* param;
+	FILE *la_out;
+
+	// Position
+	param = cmdline_get_non_opt(argc, argv, 0);
+	if (param == NULL || str2num(param, &index) || index <= 0)
+	{
+        msgf(STR_INVALID_PARAMETERS);
+		return 0;
+    }
+
+	cbl = open_cable(1);
+    if (cbl == NULL)
+        return 0;
+
+    dev = select_device_in_chain(index - 1);
+    if (!dev)
+	goto cleanup;
+        
+    // USER1..4
+    param = cmdline_get_non_opt(argc, argv, 1);
+    if(param == NULL) {
+	    msgf(STR_INVALID_PARAMETERS);
+	    goto cleanup;
+    }
+	if (param == NULL || str2num(param, &user) || (user <= 0) || (user > 4))
+	{
+        msgf(STR_INVALID_PARAMETERS);
+		return 0;
+    }
+
+    // file
+    param = cmdline_get_non_opt(argc, argv, 2);
+    if(param == NULL) {
+	    msgf(STR_INVALID_PARAMETERS);
+	    goto cleanup;
+    }
+    
+    assert((la_out = fopen(param,"w")));
+    
+    cnt=0;
+    
+    ival[0]=0;
+    ival[1]=0;
+    ival[2]=0;
+    ival[3]=0;
+    ival[4]=reverse8(0x7f);
+    
+    while(1) {
+	    int i, j;
+	    
+	    assert(!(dev->user(cbl, user, ival, oval, 40)));
+	    
+	    for(i=0;i<5;i++)
+		oval[i]=reverse8(oval[i]);
+	    	    
+	    // no new data left
+	    if(!(oval[0]&0x80))
+		    break;
+	    
+	    fprintf(la_out,"%6d",cnt++);
+	    
+	    for(i=1;i<5;i++) {
+		for(j=7;j>=0;j--)
+			fprintf(la_out,",%d",(oval[i]>>j)&1);
+	    }
+	    
+	    fprintf(la_out,"\n");
+    }
+    
+    fclose(la_out);
+    
+    printf("%d samples read\n",cnt);
+
+cleanup:    
+	close_cable(cbl);
+		
+   return 0;
+}
+	
 int cmd_user(int argc, const char **argv){
 	cable* cbl;
     chip* dev;
@@ -765,6 +853,7 @@ command_t commands[] =
     {STR_CMD_USER, cmd_user},
     {STR_CMD_SERVER, cmd_server},
     {STR_CMD_WRITE, cmd_write},
+    {STR_CMD_LA, cmd_la},
     {(unsigned int)-1, NULL}
 };
 
