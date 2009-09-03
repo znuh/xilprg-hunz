@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "digilent.h"
 #include "chip.h"
 #include "cmdline.h"
+#include <signal.h>
 
 globals g;
 
@@ -256,6 +257,12 @@ cleanup:
 	return rc;
 }
 
+void on_quit(int sig) {
+	readline_save_history();
+	signal(sig, SIG_DFL);
+	raise(sig);
+}
+
 int main()
 {
     char line[1024];
@@ -269,13 +276,20 @@ int main()
 
 	if (load_config_file())
 		goto cleanup;
-
+	
+	readline_load_history();
+	
+	signal(SIGTERM, &on_quit);
+	signal(SIGINT, &on_quit);
+	
     do
     {
         if (prompt_read_line("xilprg> ", line, sizeof(line)) < 0)
 			break;
     }
     while (process_command_line(line) != CMDLINE_EXIT_PROGRAM);
+    
+    readline_save_history();
 
     rc = 0;
 

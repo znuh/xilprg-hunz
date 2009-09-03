@@ -68,6 +68,9 @@ int enable_user_mode_io();
 u8 reverse8(u8);
 u32 reverse32(u32);
 
+void readline_load_history(void);
+void readline_save_history(void);
+
 #if defined(WIN32) && !defined(__CYGWIN__)
 u8 inb(unsigned int addr);
 void outb(u8 data, unsigned int addr);

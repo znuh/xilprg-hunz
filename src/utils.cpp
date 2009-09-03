@@ -158,6 +158,26 @@ int get_current_directory(char* sz, int len)
 #endif
 }
 
+void readline_load_history(void) {
+#ifndef WIN32
+	char line[1024];
+	
+	strcpy(line,getenv("HOME"));
+	strcat(line,"/.xilprg_history");
+	read_history(line);
+#endif
+}
+
+void readline_save_history(void) {
+#ifndef WIN32
+	char line[1024];
+	
+	strcpy(line,getenv("HOME"));
+	strcat(line,"/.xilprg_history");
+	write_history(line);
+#endif	
+}
+
 int prompt_read_line(const char* prompt, char* line, int maxlen)
 {
 #if defined(WIN32) && !defined(__CYGWIN__)
