@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdarg.h>
 
 #if !defined(WIN32) || defined(__CYGWIN__)
+#include <stdint.h>
 #include <unistd.h>
 #include <sys/io.h>
 #endif
