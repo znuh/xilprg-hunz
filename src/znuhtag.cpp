@@ -51,7 +51,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define MAX_BLOCKLEN		((64-2)*8)
 
-znuhtag::znuhtag()
+znuhtag::znuhtag(unsigned int _num)
+: num(_num)
 {
     handle = NULL;
 
@@ -65,6 +66,7 @@ struct usb_device* znuhtag::find_device()
 {
 	struct usb_bus *bus;
 	struct usb_device *dev;
+	unsigned int cnt = 0;
 
 	usb_find_busses();
 	usb_find_devices();
@@ -72,9 +74,11 @@ struct usb_device* znuhtag::find_device()
 	for (bus = usb_get_busses(); bus; bus = bus->next) {
 		for (dev = bus->devices; dev; dev = dev->next) {
 			if (dev->descriptor.idVendor == USB_VENDOR_ID &&
-			    dev->descriptor.idProduct == USB_PRODUCT_ID)
+			    dev->descriptor.idProduct == USB_PRODUCT_ID) {
 				// Found it
-				return dev;
+				    if((cnt++) == num)
+					return dev;
+			    }
 		}
 	}
 

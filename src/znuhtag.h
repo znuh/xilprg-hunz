@@ -70,7 +70,7 @@ public:
     };
 	
 public:
-	znuhtag();
+	znuhtag(unsigned int _num);
 	virtual ~znuhtag();
 
     virtual int open();
@@ -93,6 +93,7 @@ protected:
 	void usb_transfer(unsigned char *snd, unsigned char *rcv, int bitlen);
 	void usb_command(int tms, void *in, void *out, int bitlen, int last);
 
+    unsigned int num;
 };
 
 #endif
