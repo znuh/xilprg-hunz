@@ -135,18 +135,29 @@ cleanup:
 int cmd_program(int argc, const char** argv)
 {
 	cable* cbl = NULL;
-	int index, spi=0;
-    program_file* f = NULL;
+	int index, low_index, hi_index, spi=0;
+	program_file* f = NULL;
 	const char* param;
 	chip* dev;
 
 	// Position
 	param = cmdline_get_non_opt(argc, argv, 0);
-	if (param == NULL || str2num(param, &index) || index <= 0)
-	{
-        msgf(STR_INVALID_PARAMETERS);
+	if(param == NULL) {
+		msgf(STR_INVALID_PARAMETERS);
 		return 0;
-    }
+	}
+	else if(strchr(param,'*')) {
+		low_index = 1;
+		hi_index = 0xffff;
+	}
+	else {
+		if(str2num(param, &index) || index <= 0) {
+			msgf(STR_INVALID_PARAMETERS);
+			return 0;
+		}
+		low_index = index;
+		hi_index = index;
+	}
 
 	// File name
 	param = cmdline_get_non_opt(argc, argv, 1);
@@ -154,18 +165,13 @@ int cmd_program(int argc, const char** argv)
 	{
         msgf(STR_INVALID_PARAMETERS);
 		return 0;
-    }
+	}
 
 	// Open programmer cable with auto-detect
-    cbl = open_cable(1);
-    if (cbl == NULL)
-        goto cleanup;
+	cbl = open_cable(1);
+	if (cbl == NULL)
+		goto cleanup;
 
-	// Select device
-	dev = select_device_in_chain(index - 1);
-    if (dev == NULL)
-        goto cleanup;
-	
 	f = create_program_file(dev, argc, argv);
 	if (f == NULL)
 		goto cleanup;
@@ -174,22 +180,31 @@ int cmd_program(int argc, const char** argv)
 	if (f->load(param))
 		goto cleanup;
 
-	// Erase first
-	if (cmdline_has_opt(argc, argv, "e"))
-	{
-		msgf(STR_ERASING, index, dev->name.c_str());
-		if (dev->erase(cbl))
+    
+	for(index=low_index; index <= hi_index; index++) {
+		// Select device
+		dev = select_device_in_chain(index - 1);
+		if (dev == NULL)
 			goto cleanup;
-	}
+	
+		// Erase first
+		if (cmdline_has_opt(argc, argv, "e"))
+		{
+			msgf(STR_ERASING, index, dev->name.c_str());
+			if (dev->erase(cbl))
+				goto cleanup;
+		}
     	
-	// spi flash write?
-	if (cmdline_has_opt(argc, argv, "spi"))
-		spi=1;
+		// spi flash write?
+		if (cmdline_has_opt(argc, argv, "spi"))
+			spi=1;
 	
-    msgf(STR_PROGRAMMING, index, dev->name.c_str());
+		msgf(STR_PROGRAMMING, index, dev->name.c_str());
 	
-	if (dev->program(cbl, f,spi) == 0)
-		msgf(STR_SUCCESS_COMPLETED);
+		if (dev->program(cbl, f,spi) == 0)
+			msgf(STR_SUCCESS_COMPLETED);
+		
+	}
 	
 cleanup:
 
