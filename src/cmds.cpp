@@ -139,6 +139,11 @@ int cmd_program(int argc, const char** argv)
 	program_file* f = NULL;
 	const char* param;
 	chip* dev;
+	
+	// Open programmer cable with auto-detect
+	cbl = open_cable(1);
+	if (cbl == NULL)
+		goto cleanup;
 
 	// Position
 	param = cmdline_get_non_opt(argc, argv, 0);
@@ -148,7 +153,7 @@ int cmd_program(int argc, const char** argv)
 	}
 	else if(strchr(param,'*')) {
 		low_index = 1;
-		hi_index = 0xffff;
+		hi_index = (int)g.dev_chain.size();
 	}
 	else {
 		if(str2num(param, &index) || index <= 0) {
@@ -158,7 +163,7 @@ int cmd_program(int argc, const char** argv)
 		low_index = index;
 		hi_index = index;
 	}
-
+	
 	// File name
 	param = cmdline_get_non_opt(argc, argv, 1);
 	if (param == NULL)
@@ -166,27 +171,24 @@ int cmd_program(int argc, const char** argv)
         msgf(STR_INVALID_PARAMETERS);
 		return 0;
 	}
-
-	// Open programmer cable with auto-detect
-	cbl = open_cable(1);
-	if (cbl == NULL)
-		goto cleanup;
-
-	f = create_program_file(dev, argc, argv);
-	if (f == NULL)
-		goto cleanup;
-    
-	// Load file
-	if (f->load(param))
-		goto cleanup;
-
-    
+	
 	for(index=low_index; index <= hi_index; index++) {
+
 		// Select device
 		dev = select_device_in_chain(index - 1);
 		if (dev == NULL)
 			goto cleanup;
-	
+
+		if(f == NULL) {
+			f = create_program_file(dev, argc, argv);
+			if (f == NULL)
+				goto cleanup;
+    
+			// Load file
+			if (f->load(param))
+				goto cleanup;
+		}
+				
 		// Erase first
 		if (cmdline_has_opt(argc, argv, "e"))
 		{
