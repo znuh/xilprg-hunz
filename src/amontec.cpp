@@ -125,9 +125,15 @@ int amontec::open() {
 	
 	// flush
 	buf[3]=0x87;
-	ftdi_write_data(ftdic,buf,4);	
+	
+	// set speed to 1.5MHz
+	buf[4]=0x86;
+	buf[5]=3;
+	buf[6]=0;
+	
+	ftdi_write_data(ftdic,buf,4+3);	
 	ftdi_read_data(ftdic,buf,64);
-		
+	
 	/*
 	buf[0]=0x39;
 	buf[1]=(rc-1)&0xff;
