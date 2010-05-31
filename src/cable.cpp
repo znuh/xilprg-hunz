@@ -593,7 +593,7 @@ cable* cable::factory(const char* s)
     }
     else if (stricmp(argv[0],"amontec") == 0) {
 	    int speed = 0;
-	    if (argc == 1)
+	    if (argc > 1)
 		    str2num(argv[1], &speed);
 	cbl = new amontec(speed);
     }
