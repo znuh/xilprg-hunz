@@ -49,8 +49,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <time.h>
 #include <assert.h>
 
-amontec::amontec(){
+amontec::amontec(int _speed){
 	ftdic = NULL;
+	speed = _speed;
 }
 
 amontec::~amontec(){
@@ -126,10 +127,15 @@ int amontec::open() {
 	// flush
 	buf[3]=0x87;
 	
-	// set speed to 1.5MHz
+	// tck_period = 6MHz / (val+1) // AN_108 3.8.2
+	
+	if(!speed)
+		speed = 400; // default: 400kHz
+	
 	buf[4]=0x86;
-	buf[5]=3;
-	buf[6]=0;
+	buf[5]=((6000/speed)-1)&0xff;
+	buf[6]=((6000/speed)-1)>>8;
+	printf("speed: %d kHz\n",6000/((buf[5]|(buf[6]<<8))+1));
 	
 	ftdi_write_data(ftdic,buf,4+3);	
 	ftdi_read_data(ftdic,buf,64);

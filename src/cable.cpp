@@ -591,8 +591,12 @@ cable* cable::factory(const char* s)
 		    str2num(argv[1], &num);
 	cbl = new znuhtag(num);
     }
-    else if (stricmp(argv[0],"amontec") == 0)
-	cbl = new amontec;
+    else if (stricmp(argv[0],"amontec") == 0) {
+	    int speed = 0;
+	    if (argc == 1)
+		    str2num(argv[1], &speed);
+	cbl = new amontec(speed);
+    }
     else {
         msgf(STR_INVALID_CABLE_DEF);
         return NULL;

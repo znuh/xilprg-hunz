@@ -58,7 +58,7 @@ public:
     };
 	
 public:
-	amontec();
+	amontec(int speed);
 	virtual ~amontec();
 
     virtual int open();
@@ -73,6 +73,7 @@ public:
 protected:
 
 	struct ftdi_context *ftdic;
+	int speed;
 
 	void shift_tdi_tdo(int n, unsigned char *ptdi, unsigned char *ptdo);
 	void shift_tdi_tms_tdo(int tdi, u32 tms, int len, unsigned char *tdo);
